@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP en 20 minutos: aprende jugando</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4efe6; --paper:#fbf8f2; --sand:#ece4d6; --ink:#4a4036; --muted:#8c8274; --line:#d8cdbb; --shadow:#d6c9b4;
+  --host:#a79bcf; --hostD:#6f649e;
+  --client:#9cc0a4; --clientD:#5d8a68;
+  --server:#e2b08c; --serverD:#ad714a;
+  --res:#9dbad3; --resD:#5a82a5;
+  --prompt:#dcaebd; --promptD:#a3687f;
+  --ext:#cfc6b8; --extD:#8c8274;
+  --ok:#cfe5d2; --okD:#5d8a68; --bad:#f2d3d3; --badD:#b05c5c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Pixelify Sans",system-ui,sans-serif;font-size:17px;color:var(--ink);line-height:1.45;
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--sand) 1px,transparent 1px),linear-gradient(90deg,var(--sand) 1px,transparent 1px);
+  background-size:24px 24px}
+.lbl,.tab,.btn,.pill,.seg button,.score{font-family:Silkscreen,monospace}
+header{max-width:980px;margin:0 auto;padding:30px 20px 14px;display:flex;gap:18px;align-items:center}
+header .hero{flex-shrink:0}
+h1{font-size:32px;margin:0;font-weight:700;letter-spacing:.01em}
+.sub{color:var(--muted);margin:2px 0 0}
+nav{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:3px solid var(--ink)}
+.navin{max-width:980px;margin:0 auto;padding:10px 20px;display:flex;gap:12px;align-items:center}
+.tabs{display:flex;gap:8px;overflow-x:auto;flex:1;padding:4px 4px 8px}
+.tab{border:0;background:var(--paper);color:var(--ink);padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap;
+  box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),4px 6px 0 0 var(--shadow)}
+.tab.on{background:var(--ink);color:var(--paper)}
+.tab.seen:not(.on){background:var(--sand)}
+.xp{white-space:nowrap;font-family:Silkscreen;font-size:12px;display:flex;gap:6px;align-items:center}
+.blocks{display:flex;gap:3px}
+.blocks i{width:12px;height:12px;background:var(--sand);border:2px solid var(--ink)}
+.blocks i.on{background:var(--server)}
+main{max-width:980px;margin:0 auto;padding:26px 20px 30px}
+section{display:none}
+section.on{display:block;animation:pop .3s steps(4)}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h2{font-size:26px;margin:0 0 4px;font-weight:700}
+h3{font-size:19px;margin:20px 0 10px;font-weight:600}
+.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--paper);border:3px solid var(--ink);padding:18px;margin-bottom:20px;box-shadow:6px 6px 0 var(--shadow)}
+.btn{border:0;background:var(--ink);color:var(--paper);padding:8px 14px;font-size:12px;cursor:pointer;margin:3px;
+  box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),5px 7px 0 0 var(--shadow)}
+.btn.ghost{background:var(--paper);color:var(--ink)}
+.btn:active{transform:translate(3px,3px)}
+.btn:disabled{opacity:.35;cursor:default;transform:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.caption{min-height:52px;margin-top:12px;padding:10px 12px;background:var(--sand);border:2px dashed var(--line)}
+.caption::before{content:"▶ ";color:var(--serverD)}
+.note{font-size:15px;color:var(--muted)}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.flip{perspective:900px;height:190px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s steps(6);transform-style:preserve-3d}
+.flip.open .in{transform:rotateY(180deg)}
+.flip:hover .face.front{transform:translateY(-3px)}
+.face{position:absolute;inset:0;backface-visibility:hidden;padding:14px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px;
+  border:3px solid var(--ink);background:var(--paper);box-shadow:5px 5px 0 var(--shadow);transition:transform .15s steps(2)}
+.face.back{transform:rotateY(180deg);font-size:15px;justify-content:flex-start}
+.face b{font-size:20px}
+.face small{color:var(--muted);font-size:14.5px}
+.face .hint{font-family:Silkscreen;font-size:10px;color:var(--muted);margin-top:4px}
+.pill{display:inline-block;font-size:10.5px;padding:3px 7px;color:var(--ink);border:2px solid var(--ink);margin-bottom:6px}
+code{font-family:"JetBrains Mono",monospace;font-size:.88em;background:var(--sand);padding:0 4px}
+pre{background:#f1eadf;color:var(--ink);border:3px solid var(--ink);padding:16px;overflow:auto;font:13px/1.6 "JetBrains Mono",monospace;margin:10px 0;position:relative;box-shadow:5px 5px 0 var(--shadow)}
+pre code{background:none;padding:0;font-size:inherit}
+pre .k{color:var(--serverD);font-weight:600}pre .s{color:var(--clientD)}pre .c{color:#a69b8b;font-style:italic}pre .f{color:var(--hostD)}
+.copy{position:absolute;top:8px;right:8px}
+.sprite{image-rendering:pixelated;shape-rendering:crispEdges;display:block}
+.bob{animation:bob 1.2s steps(2) infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+
+/* escenario del flujo */
+.stagewrap{overflow-x:auto}
+.stage{position:relative;height:270px;min-width:600px;background:var(--sand);border:3px solid var(--ink);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:12px 12px}
+.node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.node .tag{font-family:Silkscreen;font-size:11px;background:var(--paper);border:2px solid var(--ink);padding:2px 6px}
+.hostbox{position:absolute;left:2%;top:26%;width:40%;height:68%;border:3px solid var(--hostD);background:rgba(167,155,207,.18)}
+.hostbox .tl{position:absolute;top:-14px;left:10px;font-family:Silkscreen;font-size:12px;background:var(--host);border:2px solid var(--ink);padding:1px 6px}
+.wire{position:absolute;height:0;border-top:4px dashed var(--muted)}
+#pkt{position:absolute;transform:translate(-50%,-50%);transition:left .9s steps(9),top .9s steps(9);z-index:3;opacity:0;filter:drop-shadow(3px 3px 0 var(--shadow))}
+.node.glow .sprite{animation:flash .5s steps(2) 2}
+@keyframes flash{50%{transform:scale(1.15)}}
+
+/* secuencia */
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lane{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border:3px solid var(--ink);font-family:Silkscreen;font-size:13px}
+.track{position:relative;height:60px;margin:6px 0}
+.track .rail{position:absolute;top:34px;left:8%;right:8%;border-top:4px dashed var(--muted)}
+.track .ml{position:absolute;top:2px;left:0;right:0;text-align:center;font:600 14px "JetBrains Mono",monospace}
+#seqDot{position:absolute;top:22px;left:8%;transition:left .9s steps(10)}
+.steps{display:flex;gap:4px;margin:10px 0}
+.steps span{flex:1;height:12px;border:2px solid var(--ink);background:var(--paper)}
+.steps span.on{background:var(--host)}
+
+/* juego */
+.game-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:3px solid var(--ink);padding:10px 12px;margin-bottom:10px;background:var(--paper)}
+.game-item.ok{background:var(--ok)}
+.game-item.bad{animation:shake .3s steps(3);background:var(--bad)}
+@keyframes shake{33%{transform:translateX(-6px)}66%{transform:translateX(6px)}}
+.choices{display:flex;flex-wrap:wrap;justify-content:flex-end}
+.choices .btn{color:var(--ink)}
+.why{font-size:14px;color:var(--clientD);margin-top:2px}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px;border:3px solid var(--ink);margin-bottom:10px;cursor:pointer;background:var(--paper)}
+.check input{appearance:none;width:20px;height:20px;border:3px solid var(--ink);background:var(--paper);margin-top:3px;flex-shrink:0;cursor:pointer}
+.check input:checked{background:var(--client);box-shadow:inset 0 0 0 3px var(--paper)}
+.check.done{background:var(--ok)}
+.score{font-size:12px}
+.seg{display:inline-flex;gap:0;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow)}
+.seg button{border:0;background:var(--paper);padding:7px 12px;font-size:12px;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.q{margin-bottom:18px}
+.q .opt{display:block;width:100%;text-align:left;border:3px solid var(--ink);background:var(--paper);padding:9px 12px;margin:8px 0;font:16px "Pixelify Sans";cursor:pointer;color:var(--ink);box-shadow:4px 4px 0 var(--shadow)}
+.q .opt:hover{background:var(--sand)}
+.q .opt.right{background:var(--ok)}
+.q .opt.wrong{background:var(--bad)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border:2px solid var(--ink);margin-right:5px;vertical-align:-1px}
+.foot{max-width:980px;margin:0 auto;padding:0 20px 50px;display:flex;justify-content:space-between}
+.rule{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.rule span{display:flex;gap:8px;align-items:center}
+.win{display:none;text-align:center;padding:14px;border:3px solid var(--ink);background:var(--ok);margin-top:10px;font-size:18px}
+.win.on{display:block;animation:pop .4s steps(4)}
+@media (max-width:620px){h1{font-size:25px}header{gap:10px}.flip{height:210px}.navin{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hero bob" id="heroSprite"></div>
+  <div>
+    <h1>MCP en 20 minutos</h1>
+    <p class="sub">Model Context Protocol, explicado con piezas que se mueven y cosas que puedes tocar.</p>
+  </div>
+</header>
+<nav>
+  <div class="navin">
+    <div class="tabs" id="tabs"></div>
+    <div class="xp"><span>★ XP <b id="xp">0</b></span><div class="blocks" id="lvl"></div></div>
+  </div>
+</nav>
+<main>
+
+<!-- 1 -->
+<section id="s1">
+  <h2>1 · ¿Qué es MCP?</h2>
+  <p class="lead">Un estándar abierto para conectar asistentes de IA con herramientas y datos. Piensa en él como el <b>USB‑C de la IA</b>: un solo conector para todo.</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">El problema que resuelve</h3>
+    <p class="note" style="margin:0 0 10px">Cambia el modo y mira cuántas integraciones hay que construir.</p>
+    <div class="row" style="margin-bottom:12px">
+      <div class="seg"><button id="m0" class="on">Sin MCP</button><button id="m1">Con MCP</button></div>
+      <span class="score" id="nmCount"></span>
+    </div>
+    <svg id="nm" viewBox="0 0 600 270" width="100%" shape-rendering="crispEdges"></svg>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Las tres piezas en acción</h3>
+    <p class="note" style="margin:0 0 10px">Pulsa el botón y sigue al mensaje paso a paso.</p>
+    <div class="stagewrap"><div class="stage" id="stage">
+      <div class="hostbox"><span class="tl">HOST</span></div>
+      <div class="wire" style="left:40%;top:58%;width:13%"></div>
+      <div class="wire" style="left:71%;top:58%;width:9%"></div>
+      <div class="node" id="nUser" style="left:16%;top:2%"><div data-sp="user" data-px="4"></div><span class="tag">TÚ</span></div>
+      <div class="node" id="nHost" style="left:5%;top:38%"><div data-sp="computer" data-px="4"></div><span class="tag">MODELO</span></div>
+      <div class="node" id="nClient" style="left:25%;top:44%"><div data-sp="plug" data-px="4"></div><span class="tag">CLIENTE</span></div>
+      <div class="node" id="nServer" style="left:55%;top:36%"><div data-sp="robot" data-px="5"></div><span class="tag">SERVIDOR MCP</span></div>
+      <div class="node" id="nExt" style="left:82%;top:38%"><div data-sp="db" data-px="5"></div><span class="tag">API / BD</span></div>
+      <div id="pkt"></div>
+    </div></div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="playFlow">▶ Ver una petición</button></div>
+    <div class="caption" id="flowCap">Ejemplo: le pides a la IA “¿qué recetas tengo con aguacate?”.</div>
+    <div class="legend"><span><i style="background:var(--host)"></i>Host (la app de IA)</span><span><i style="background:var(--client)"></i>Cliente (uno por servidor)</span><span><i style="background:var(--server)"></i>Servidor (tu programa)</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">¿Quién lo creó?</h3>
+    <p style="margin:0">Anthropic lo lanzó en noviembre de 2024 como estándar abierto. En diciembre de 2025 lo donó a la <b>Agentic AI Foundation</b> de la Linux Foundation, así que hoy lo gobierna una fundación neutral y lo usan OpenAI, Google, Microsoft y muchos más.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2>2 · ¿Qué contiene?</h2>
+  <p class="lead">Toca cada tarjeta para voltearla. Primero lo que <b>ofrece el servidor</b>, luego lo que <b>ofrece el cliente</b> y al final cómo viajan los mensajes.</p>
+  <h3>Lo que expone un servidor (las 3 primitivas)</h3>
+  <div class="grid" id="srvCards"></div>
+  <h3>Lo que puede ofrecer el cliente</h3>
+  <div class="grid" id="cliCards"></div>
+  <h3>La plomería</h3>
+  <div class="grid" id="pipeCards"></div>
+  <div class="card" style="margin-top:22px">
+    <b>Regla para recordarlo</b>
+    <div class="rule" style="margin-top:10px">
+      <span><span data-sp="hammer" data-px="3"></span>Tools = <b>verbos</b> (hacer algo)</span>
+      <span><span data-sp="scroll" data-px="3"></span>Resources = <b>sustantivos</b> (leer algo)</span>
+      <span><span data-sp="bubble" data-px="3"></span>Prompts = <b>recetas</b> (un flujo listo)</span>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2>3 · Cómo platican: el ciclo de vida</h2>
+  <p class="lead">Avanza paso a paso y mira el mensaje JSON real que viaja en cada momento.</p>
+  <div class="card">
+    <div class="lanes">
+      <div class="lane" style="background:var(--client)"><span data-sp="plug" data-px="2"></span>CLIENTE</div>
+      <div class="lane" style="background:var(--server)"><span data-sp="robot" data-px="2"></span>SERVIDOR</div>
+    </div>
+    <div class="track"><div class="rail"></div><div class="ml" id="seqLbl"></div><div id="seqDot"></div></div>
+    <div class="steps" id="seqSteps"></div>
+    <div class="caption" id="seqCap"></div>
+    <pre id="seqJson"></pre>
+    <div class="row"><button class="btn ghost" id="seqPrev">← Anterior</button><button class="btn" id="seqNext">Siguiente →</button></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2>4 · Cómo diseñar uno</h2>
+  <p class="lead">Primero entrena el ojo: clasifica cada capacidad. Luego sigue la lista de diseño.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <b>Juego: ¿Tool, Resource o Prompt?</b><span class="score" id="gScore"></span>
+    </div>
+    <div id="game"></div>
+    <div class="win" id="gWin">¡Nivel superado! Ya distingues las 3 primitivas ★</div>
+    <button class="btn ghost" id="gReset" style="margin-top:10px">Reiniciar</button>
+  </div>
+  <div class="card">
+    <b>Lista de diseño</b> <span class="note">(marca cada paso cuando lo tengas)</span>
+    <div id="design" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2>5 · Cómo construirlo</h2>
+  <p class="lead">Un servidor mínimo de recetas, de cero a conectado con Claude. Elige tu lenguaje.</p>
+  <div class="row" style="margin-bottom:14px">
+    <div class="seg"><button id="lPy" class="on">Python</button><button id="lTs">TypeScript</button></div>
+  </div>
+  <div class="steps" id="bSteps"></div>
+  <div class="card" id="bBox"></div>
+  <div class="row"><button class="btn ghost" id="bPrev">← Anterior</button><button class="btn" id="bNext">Siguiente →</button></div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2>6 · Ponte a prueba</h2>
+  <p class="lead">Cinco preguntas rápidas. <span class="score" id="qScore"></span></p>
+  <div class="card" id="quiz"></div>
+  <div class="win" id="qWin">¡Jefe final derrotado! Ya puedes diseñar tu primer servidor MCP ★</div>
+</section>
+</main>
+<div class="foot">
+  <button class="btn ghost" id="pPrev">← Sección anterior</button>
+  <button class="btn" id="pNext">Siguiente sección →</button>
+</div>
+
+<script>
+/* ---------- sprites pixel ---------- */
+const PAL={k:"#4a4036",w:"#fbf8f2"};
+const SP={
+ computer:{s:"#a79bcf",g:"#9cc0a4",m:[
+  ".kkkkkkkkkk.",
+  ".kssssssssk.",
+  ".kswwwwwwsk.",
+  ".kswgwwwwsk.",
+  ".kswwwgwwsk.",
+  ".kswwwwwwsk.",
+  ".kssssssssk.",
+  ".kkkkkkkkkk.",
+  "....kssk....",
+  "..kkkkkkkk.."]},
+ plug:{s:"#9cc0a4",m:[
+  "...k....k...",
+  "...k....k...",
+  "..kkkkkkkk..",
+  "..kssssssk..",
+  "..kswwsssk..",
+  "..kssssssk..",
+  "...kssssk...",
+  "....kssk....",
+  ".....kk.....",
+  ".....kk.....",
+  "......kk...."]},
+ robot:{s:"#e2b08c",g:"#dcaebd",m:[
+  ".....kk.....",
+  "....kggk....",
+  "..kkkkkkkk..",
+  "..kwwwwwwk..",
+  "..kwkwwkwk..",
+  "..kwwwwwwk..",
+  "..kwkkkkwk..",
+  "..kkkkkkkk..",
+  ".kssssssssk.",
+  ".ksskkkkssk.",
+  ".kssssssssk.",
+  "..kk....kk.."]},
+ db:{s:"#cfc6b8",m:[
+  "..kkkkkkkk..",
+  ".kwwwwwwwwk.",
+  ".kkwwwwwwkk.",
+  ".kssssssssk.",
+  ".ksskkkkssk.",
+  ".kssssssssk.",
+  ".ksskkkkssk.",
+  ".kssssssssk.",
+  "..kkkkkkkk.."]},
+ user:{s:"#dcaebd",m:[
+  "...kkkk...",
+  "..kwwwwk..",
+  "..kwkkwk..",
+  "..kwwwwk..",
+  "...kkkk...",
+  ".kkkkkkkk.",
+  "kssssssssk",
+  "kssssssssk",
+  "kkkkkkkkkk"]},
+ hammer:{s:"#e2b08c",m:[
+  "kkkkkkk..",
+  "ksssssk..",
+  "kssssssk.",
+  "ksssssk..",
+  "kkkkkkk..",
+  "..kwk....",
+  "..kwk....",
+  "..kwk....",
+  "..kwk....",
+  "..kkk...."]},
+ scroll:{s:"#9dbad3",m:[
+  ".kkkkkkkkk.",
+  "kwwwwwwwwwk",
+  ".kssssssssk",
+  ".kskkkkkssk",
+  ".kssssssssk",
+  ".kskkkkkssk",
+  ".kssssssssk",
+  ".kskkkssssk",
+  "kwwwwwwwwwk",
+  ".kkkkkkkkk."]},
+ bubble:{s:"#dcaebd",m:[
+  ".kkkkkkkkkk.",
+  "kssssssssssk",
+  "ksskssksskss",
+  "kssssssssssk",
+  ".kkkkkkkkkk.",
+  "..ksk.......",
+  "..kk........"]},
+ star:{s:"#e2b08c",m:[
+  "....k....",
+  "...ksk...",
+  "...ksk...",
+  "kkkssskkk",
+  ".kssssk..",
+  "..ksssk..",
+  ".kskkksk.",
+  ".kk...kk."]},
+ folder:{s:"#9cc0a4",m:[
+  ".kkkk.......",
+  "kwwwwkkkkkk.",
+  "kssssssssssk",
+  "kssssssssssk",
+  "kssssssssssk",
+  "kssssssssssk",
+  ".kkkkkkkkkk."]},
+ question:{s:"#a79bcf",m:[
+  ".kkkkkk.",
+  "kssssssk",
+  "kskkkksk",
+  "kk..ksk.",
+  "...ksk..",
+  "...kk...",
+  "........",
+  "...kk..."]},
+ envelope:{s:"#fbf8f2",m:[
+  "kkkkkkkkkkkk",
+  "kksssssssskk",
+  "kskssssssksk",
+  "kssksssskssk",
+  "kssskkkksssk",
+  "kssssssssssk",
+  "kkkkkkkkkkkk"]},
+ laptop:{s:"#cfc6b8",g:"#9cc0a4",m:[
+  "..kkkkkkkk..",
+  "..kwwwwwwk..",
+  "..kwgwwwwk..",
+  "..kwwwgwwk..",
+  "..kkkkkkkk..",
+  ".kssssssssk.",
+  "kkkkkkkkkkkk"]},
+ globe:{s:"#9dbad3",m:[
+  "..kkkkkk..",
+  ".kswwsswk.",
+  "kswsswsssk",
+  "kkkkkkkkkk",
+  "ksswsswssk",
+  "kkkkkkkkkk",
+  "ksswsswssk",
+  ".ksswwssk.",
+  "..kkkkkk.."]},
+ coin:{s:"#e2b08c",m:[
+  ".kkkk.",
+  "kswwsk",
+  "kwsssk",
+  "kssssk",
+  ".kkkk."]}
+};
+function sprite(name,px=4){
+  const d=SP[name]; if(!d) return "";
+  const pal=Object.assign({},PAL,{s:d.s,g:d.g||d.s});
+  const h=d.m.length, w=Math.max(...d.m.map(r=>r.length));
+  let r="";
+  d.m.forEach((row,y)=>[...row].forEach((c,x)=>{ if(pal[c]) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[c]}"/>`; }));
+  return `<svg class="sprite" width="${w*px}" height="${h*px}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${r}</svg>`;
+}
+function paintSprites(root=document){root.querySelectorAll("[data-sp]").forEach(el=>{el.innerHTML=sprite(el.dataset.sp,+el.dataset.px||4);});}
+document.getElementById("heroSprite").innerHTML=sprite("robot",6);
+paintSprites();
+
+/* ---------- XP ---------- */
+const xpState={seen:new Set([0]),game:0,quiz:0,checks:0};
+function xp(){
+  const v=xpState.seen.size*5+xpState.game*10+xpState.quiz*20+xpState.checks*5;
+  document.getElementById("xp").textContent=v;
+}
+
+/* ---------- navegación ---------- */
+const names=["Qué es","Contiene","Ciclo","Diseñar","Construir","Quiz"];
+let cur=0;
+const tabs=document.getElementById("tabs"), lvl=document.getElementById("lvl");
+names.forEach((n,i)=>{const b=document.createElement("button");b.className="tab";b.textContent=(i+1)+" "+n;b.onclick=()=>go(i);tabs.appendChild(b);lvl.appendChild(document.createElement("i"));});
+function go(i){
+  cur=Math.max(0,Math.min(5,i)); xpState.seen.add(cur);
+  document.querySelectorAll("section").forEach((s,k)=>s.classList.toggle("on",k===cur));
+  [...tabs.children].forEach((t,k)=>{t.classList.toggle("on",k===cur);t.classList.toggle("seen",xpState.seen.has(k));});
+  [...lvl.children].forEach((b,k)=>b.classList.toggle("on",xpState.seen.has(k)));
+  document.getElementById("pPrev").disabled=cur===0;
+  document.getElementById("pNext").disabled=cur===5;
+  xp(); window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("pPrev").onclick=()=>go(cur-1);
+document.getElementById("pNext").onclick=()=>go(cur+1);
+
+/* ---------- N x M ---------- */
+const nm=document.getElementById("nm");
+const apps=["Claude","ChatGPT","Tu IDE"], tools=["Drive","Jira","Base de datos","Calendario"];
+function drawNM(withMcp){
+  let s="";
+  const ay=i=>55+i*80, ty=i=>35+i*66;
+  if(!withMcp){
+    apps.forEach((a,i)=>tools.forEach((t,j)=>{s+=`<line x1="148" y1="${ay(i)}" x2="452" y2="${ty(j)}" stroke="#b05c5c" stroke-opacity=".55" stroke-width="3" stroke-dasharray="6 4"><animate attributeName="stroke-dashoffset" from="40" to="0" dur="1s" repeatCount="indefinite"/></line>`;}));
+  }else{
+    apps.forEach((a,i)=>{s+=`<line x1="148" y1="${ay(i)}" x2="262" y2="135" stroke="#5d8a68" stroke-width="4" stroke-dasharray="8 4"><animate attributeName="stroke-dashoffset" from="24" to="0" dur=".8s" repeatCount="indefinite"/></line>`;});
+    tools.forEach((t,j)=>{s+=`<line x1="338" y1="135" x2="452" y2="${ty(j)}" stroke="#ad714a" stroke-width="4" stroke-dasharray="8 4"><animate attributeName="stroke-dashoffset" from="24" to="0" dur=".8s" repeatCount="indefinite"/></line>`;});
+    s+=`<rect x="264" y="109" width="80" height="58" fill="#d6c9b4"/><rect x="258" y="103" width="80" height="58" fill="#4a4036"/><rect x="262" y="107" width="72" height="50" fill="#e2b08c"/><text x="298" y="140" text-anchor="middle" fill="#4a4036" font-family="Silkscreen" font-size="17">MCP</text>`;
+  }
+  apps.forEach((a,i)=>{const y=ay(i)-19;s+=`<rect x="24" y="${y+5}" width="124" height="38" fill="#d6c9b4"/><rect x="18" y="${y}" width="124" height="38" fill="#4a4036"/><rect x="21" y="${y+3}" width="118" height="32" fill="#a79bcf"/><text x="80" y="${y+24}" text-anchor="middle" font-family="Pixelify Sans" font-size="15" fill="#4a4036">${a}</text>`;});
+  tools.forEach((t,j)=>{const y=ty(j)-18;s+=`<rect x="458" y="${y+5}" width="128" height="36" fill="#d6c9b4"/><rect x="452" y="${y}" width="128" height="36" fill="#4a4036"/><rect x="455" y="${y+3}" width="122" height="30" fill="#e2b08c"/><text x="516" y="${y+23}" text-anchor="middle" font-family="Pixelify Sans" font-size="15" fill="#4a4036">${t}</text>`;});
+  nm.innerHTML=s;
+  document.getElementById("nmCount").textContent= withMcp? "3 + 4 = 7 piezas · todos hablan con todos ★" : "3 × 4 = 12 integraciones a la medida ✗";
+  document.getElementById("m0").classList.toggle("on",!withMcp);
+  document.getElementById("m1").classList.toggle("on",withMcp);
+}
+document.getElementById("m0").onclick=()=>drawNM(false);
+document.getElementById("m1").onclick=()=>drawNM(true);
+drawNM(false);
+
+/* ---------- flujo animado ---------- */
+const pkt=document.getElementById("pkt"), cap=document.getElementById("flowCap");
+pkt.innerHTML=sprite("envelope",3);
+const P={user:[20,12,"nUser"],host:[10,52,"nHost"],client:[29,58,"nClient"],server:[61,52,"nServer"],ext:[87,52,"nExt"]};
+const flowSteps=[
+  ["user","Tú escribes la pregunta en el host (por ejemplo, Claude)."],
+  ["host","El modelo ve que hay una tool “buscar_receta” y decide usarla."],
+  ["client","El cliente MCP empaqueta la llamada como mensaje JSON‑RPC: tools/call."],
+  ["server","El servidor MCP recibe la llamada y ejecuta tu código."],
+  ["ext","Tu código consulta el sistema real: una base de datos, una API, un archivo."],
+  ["server","El servidor arma el resultado (texto, datos, imágenes) y lo regresa."],
+  ["client","El cliente entrega el resultado al modelo."],
+  ["user","El modelo te responde: “Tienes 2 recetas con aguacate: guacamole y tostadas”. ★"]
+];
+let flowBusy=false;
+document.getElementById("playFlow").onclick=async()=>{
+  if(flowBusy)return; flowBusy=true;
+  pkt.style.transition="none";pkt.style.left=P.user[0]+"%";pkt.style.top=P.user[1]+"%";pkt.style.opacity=1;
+  await new Promise(r=>setTimeout(r,60));pkt.style.transition="";
+  for(const [k,t] of flowSteps){
+    const [x,y,id]=P[k];
+    pkt.style.left=x+"%";pkt.style.top=y+"%";
+    cap.textContent=t;
+    await new Promise(r=>setTimeout(r,950));
+    const n=document.getElementById(id);n.classList.remove("glow");void n.offsetWidth;n.classList.add("glow");
+    await new Promise(r=>setTimeout(r,900));
+  }
+  flowBusy=false;
+};
+
+/* ---------- tarjetas ---------- */
+function cards(el,list){
+  const g=document.getElementById(el);
+  list.forEach(c=>{
+    const d=document.createElement("div");d.className="flip";
+    d.innerHTML=`<div class="in"><div class="face front">${sprite(c.sp,5)}<b>${c.t}</b><small>${c.s}</small><span class="hint">toca para voltear ▶</span></div>
+    <div class="face back"><span class="pill" style="background:${c.col}">${c.who}</span><div>${c.b}</div></div></div>`;
+    d.onclick=()=>d.classList.toggle("open");g.appendChild(d);
+  });
+}
+cards("srvCards",[
+  {sp:"hammer",t:"Tools",s:"Acciones que la IA puede ejecutar",col:"var(--server)",who:"La decide el modelo",b:"Funciones con nombre, descripción y parámetros (JSON Schema). Ej.: <code>crear_evento</code>, <code>enviar_correo</code>, <code>buscar_receta</code>. Pueden cambiar cosas en el mundo, por eso suelen pedir confirmación."},
+  {sp:"scroll",t:"Resources",s:"Datos que la IA puede leer",col:"var(--res)",who:"La decide la app",b:"Contenido de solo lectura identificado por una URI. Ej.: <code>file:///notas.md</code>, <code>recetas://guacamole</code>. Sirven de contexto, no ejecutan acciones."},
+  {sp:"bubble",t:"Prompts",s:"Plantillas reutilizables",col:"var(--prompt)",who:"La elige el usuario",b:"Mensajes prearmados con parámetros que aparecen como comandos (ej. <code>/plan_semanal</code>). Guían a la IA en un flujo que se repite."}
+]);
+cards("cliCards",[
+  {sp:"star",t:"Sampling",s:"El servidor pide ayuda al modelo",col:"var(--client)",who:"Servidor → cliente",b:"El servidor le pide al cliente que el modelo genere texto. Así el servidor “piensa” sin tener su propia llave de API."},
+  {sp:"folder",t:"Roots",s:"Límites de trabajo",col:"var(--client)",who:"Cliente → servidor",b:"El cliente le dice al servidor en qué carpetas o URIs puede trabajar. Es una frontera de alcance."},
+  {sp:"question",t:"Elicitation",s:"Preguntarle al usuario",col:"var(--client)",who:"Servidor → usuario",b:"A mitad de una tarea, el servidor pide un dato al usuario (ej. “¿para cuántas personas?”) a través del cliente."}
+]);
+cards("pipeCards",[
+  {sp:"envelope",t:"JSON‑RPC 2.0",s:"El idioma de los mensajes",col:"var(--sand)",who:"Formato",b:"Todo es JSON: peticiones con <code>method</code> e <code>id</code>, respuestas con <code>result</code> o <code>error</code>, y notificaciones sin respuesta."},
+  {sp:"laptop",t:"stdio",s:"Transporte local",col:"var(--sand)",who:"Transporte",b:"El host lanza tu servidor como proceso y hablan por entrada/salida estándar. Ideal para servidores en tu propia máquina."},
+  {sp:"globe",t:"Streamable HTTP",s:"Transporte remoto",col:"var(--sand)",who:"Transporte",b:"El servidor vive en una URL. Admite muchos usuarios y se protege con OAuth. Es el que usan los conectores en la nube."}
+]);
+
+/* ---------- ciclo de vida ---------- */
+const seq=[
+  {dir:1,m:"initialize",t:"El cliente saluda: dice qué versión del protocolo habla y qué sabe hacer.",j:`{"jsonrpc":"2.0","id":1,"method":"initialize",
+ "params":{"protocolVersion":"2025-06-18",
+  "capabilities":{"sampling":{},"elicitation":{}},
+  "clientInfo":{"name":"Claude","version":"1.0"}}}`},
+  {dir:-1,m:"result",t:"El servidor responde con sus capacidades: “tengo tools, resources y prompts”.",j:`{"jsonrpc":"2.0","id":1,
+ "result":{"protocolVersion":"2025-06-18",
+  "capabilities":{"tools":{},"resources":{},"prompts":{}},
+  "serverInfo":{"name":"recetas","version":"1.0.0"}}}`},
+  {dir:1,m:"notifications/initialized",t:"El cliente confirma que está listo. Es una notificación, así que no lleva id ni espera respuesta.",j:`{"jsonrpc":"2.0","method":"notifications/initialized"}`},
+  {dir:1,m:"tools/list",t:"Descubrimiento: el cliente pregunta qué tools existen.",j:`{"jsonrpc":"2.0","id":2,"method":"tools/list"}`},
+  {dir:-1,m:"result",t:"El servidor describe cada tool. El modelo lee esta descripción para decidir cuándo usarla, así que escríbela bien.",j:`{"jsonrpc":"2.0","id":2,"result":{"tools":[{
+  "name":"buscar_receta",
+  "description":"Busca recetas que usen un ingrediente",
+  "inputSchema":{"type":"object",
+    "properties":{"ingrediente":{"type":"string"}},
+    "required":["ingrediente"]}}]}}`},
+  {dir:1,m:"tools/call",t:"El modelo decidió usarla: el cliente la invoca con argumentos.",j:`{"jsonrpc":"2.0","id":3,"method":"tools/call",
+ "params":{"name":"buscar_receta",
+  "arguments":{"ingrediente":"aguacate"}}}`},
+  {dir:-1,m:"result",t:"El servidor ejecuta tu código y regresa contenido. ¡Ciclo completo! ★",j:`{"jsonrpc":"2.0","id":3,"result":{"content":[
+  {"type":"text","text":"guacamole, tostadas"}],
+  "isError":false}}`}
+];
+let si=0;
+const sSteps=document.getElementById("seqSteps"), seqDot=document.getElementById("seqDot");
+seq.forEach(()=>sSteps.appendChild(document.createElement("span")));
+function hl(json){return json.replace(/("[^"]+")(\s*:)/g,'<span class="f">$1</span>$2').replace(/:\s*("[^"]*")/g,': <span class="s">$1</span>');}
+function showSeq(){
+  const s=seq[si];
+  seqDot.innerHTML=sprite("envelope",3);
+  seqDot.style.transition="none";seqDot.style.left=s.dir>0?"8%":"calc(92% - 36px)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{seqDot.style.transition="";seqDot.style.left=s.dir>0?"calc(92% - 36px)":"8%";}));
+  document.getElementById("seqLbl").textContent=(s.dir>0?"→ ":"← ")+s.m;
+  document.getElementById("seqCap").innerHTML=`<b>Paso ${si+1}/${seq.length}.</b> ${s.t}`;
+  document.getElementById("seqJson").innerHTML=hl(s.j);
+  [...sSteps.children].forEach((e,k)=>e.classList.toggle("on",k<=si));
+  document.getElementById("seqPrev").disabled=si===0;
+  document.getElementById("seqNext").disabled=si===seq.length-1;
+}
+document.getElementById("seqPrev").onclick=()=>{si--;showSeq();};
+document.getElementById("seqNext").onclick=()=>{si++;showSeq();};
+showSeq();
+
+/* ---------- juego ---------- */
+const items=[
+  ["Crear un evento en el calendario","T","Es un verbo: cambia algo en el mundo."],
+  ["El contenido del archivo README.md","R","Es un dato que se lee, con una URI."],
+  ["“Resume esta junta en 5 puntos” como comando","P","Es una plantilla que el usuario elige."],
+  ["Enviar un correo","T","Acción con efecto: necesita confirmación."],
+  ["El esquema de la base de datos","R","Contexto de solo lectura."],
+  ["Consultar el clima de una ciudad","T","Recibe un parámetro y ejecuta una consulta."],
+  ["Plantilla de revisión de código paso a paso","P","Flujo repetible que se lanza como comando."],
+  ["Las ventas de hoy (solo lectura)","R","Datos para leer, no una acción."]
+];
+const colors={T:"var(--server)",R:"var(--res)",P:"var(--prompt)"}, labels={T:"Tool",R:"Resource",P:"Prompt"}, sps={T:"hammer",R:"scroll",P:"bubble"};
+let gTry=0;
+function buildGame(){
+  xpState.game=0;gTry=0;const g=document.getElementById("game");g.innerHTML="";
+  document.getElementById("gWin").classList.remove("on");
+  items.forEach(([txt,ans,why])=>{
+    const d=document.createElement("div");d.className="game-item";
+    d.innerHTML=`<div><div>${txt}</div><div class="why" style="display:none"></div></div><div class="choices"></div>`;
+    const ch=d.querySelector(".choices");
+    ["T","R","P"].forEach(k=>{const b=document.createElement("button");b.className="btn";b.textContent=labels[k];b.style.background=colors[k];
+      b.onclick=()=>{ if(d.classList.contains("ok"))return; gTry++;
+        if(k===ans){xpState.game++;d.classList.remove("bad");d.classList.add("ok");const w=d.querySelector(".why");w.style.display="block";w.textContent="✓ "+why;ch.innerHTML=sprite(sps[ans],3);}
+        else{d.classList.remove("bad");void d.offsetWidth;d.classList.add("bad");}
+        gScore();};
+      ch.appendChild(b);});
+    g.appendChild(d);
+  });
+  gScore();
+}
+function gScore(){
+  document.getElementById("gScore").textContent=`${xpState.game}/${items.length} · ${gTry} intentos`;
+  if(xpState.game===items.length)document.getElementById("gWin").classList.add("on");
+  xp();
+}
+document.getElementById("gReset").onclick=buildGame;
+buildGame();
+
+const designSteps=[
+  ["Define para quién y para qué","¿Qué tarea quiere lograr el usuario con la IA? Empieza con 2 o 3 casos de uso concretos, no con toda tu API."],
+  ["Separa verbos, sustantivos y flujos","Acciones → Tools. Datos para leer → Resources. Flujos que se repiten → Prompts."],
+  ["Diseña tools pensando en el modelo","Pocas tools, de alto nivel (“programar_reunión”, no 5 llamadas sueltas). Nombres claros, descripciones que digan cuándo usarla y parámetros con tipo."],
+  ["Respuestas compactas y útiles","Devuelve solo lo que el modelo necesita. Pagina resultados largos y da errores que expliquen cómo corregir la llamada."],
+  ["Seguridad desde el diseño","Permisos mínimos, confirmación para acciones destructivas, nunca expongas secretos y valida cada entrada."],
+  ["Elige el transporte","Solo para ti y en tu máquina → stdio. Para un equipo o en la nube → Streamable HTTP con OAuth."]
+];
+const dz=document.getElementById("design");
+designSteps.forEach(([t,b],i)=>{const l=document.createElement("label");l.className="check";
+  l.innerHTML=`<input type="checkbox"><div><b>${i+1}. ${t}</b><div class="note">${b}</div></div>`;
+  l.querySelector("input").onchange=e=>{l.classList.toggle("done",e.target.checked);xpState.checks=dz.querySelectorAll("input:checked").length;xp();};
+  dz.appendChild(l);});
+
+/* ---------- construir ---------- */
+let lang="py", bi=0;
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const build={
+ py:[
+  {t:"Instala el SDK oficial",b:"Necesitas Python 3.10 o más. El paquete <code>mcp</code> trae FastMCP, que reduce todo a decoradores.",c:`# con uv (recomendado)
+uv init recetas-mcp && cd recetas-mcp
+uv add "mcp[cli]"
+
+# o con pip
+pip install "mcp[cli]"`},
+  {t:"Escribe el servidor",b:"Una tool, un resource y un prompt. Fíjate: la <b>docstring</b> se vuelve la descripción que lee el modelo y los <b>type hints</b> se vuelven el JSON Schema.",c:`# server.py
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("recetas")
+
+RECETAS = {
+    "guacamole": "aguacate, cebolla, chile, limón",
+    "tostadas": "tortilla, frijol, aguacate, queso",
+}
+
+@mcp.tool()
+def buscar_receta(ingrediente: str) -> list[str]:
+    """Busca recetas que usen un ingrediente."""
+    return [n for n, ing in RECETAS.items() if ingrediente in ing]
+
+@mcp.resource("recetas://{nombre}")
+def receta(nombre: str) -> str:
+    """Ingredientes de una receta."""
+    return RECETAS.get(nombre, "No existe")
+
+@mcp.prompt()
+def plan_semanal(personas: int = 2) -> str:
+    """Arma un menú de la semana."""
+    return f"Con mis recetas, arma un menú de 7 días para {personas} personas."
+
+if __name__ == "__main__":
+    mcp.run()  # stdio por defecto`},
+  {t:"Pruébalo con el Inspector",b:"El MCP Inspector abre una página donde puedes listar y llamar tus tools a mano, sin ninguna IA de por medio. Así depuras rápido.",c:`uv run mcp dev server.py
+# se abre el Inspector en tu navegador:
+# Connect → Tools → buscar_receta → {"ingrediente": "aguacate"}`},
+  {t:"Conéctalo a Claude",b:"En Claude Desktop: Configuración → Desarrollador → Editar configuración. Agrega tu servidor y reinicia la app.",c:`// claude_desktop_config.json
+{
+  "mcpServers": {
+    "recetas": {
+      "command": "uv",
+      "args": ["--directory", "/ruta/a/recetas-mcp", "run", "server.py"]
+    }
+  }
+}`},
+  {t:"Itera y despliega",b:"Pregúntale a Claude “¿qué recetas tengo con aguacate?”. Si elige mal la tool, mejora la descripción. Cuando quieras compartirlo, cambia a transporte HTTP y agrega autenticación.",c:`# servidor remoto (para un equipo)
+mcp.run(transport="streamable-http")
+# luego: ponlo detrás de HTTPS + OAuth
+# y regístralo como conector personalizado`}
+ ],
+ ts:[
+  {t:"Instala el SDK oficial",b:"Necesitas Node 18 o más. El SDK usa <code>zod</code> para definir los parámetros.",c:`mkdir recetas-mcp && cd recetas-mcp
+npm init -y
+npm install @modelcontextprotocol/sdk zod
+npm install -D typescript @types/node`},
+  {t:"Escribe el servidor",b:"Registras cada tool con nombre, descripción, esquema y función. El esquema zod se convierte en el JSON Schema que ve el modelo.",c:`// server.ts
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const RECETAS: Record<string, string> = {
+  guacamole: "aguacate, cebolla, chile, limón",
+  tostadas: "tortilla, frijol, aguacate, queso",
+};
+
+const server = new McpServer({ name: "recetas", version: "1.0.0" });
+
+server.tool(
+  "buscar_receta",
+  "Busca recetas que usen un ingrediente",
+  { ingrediente: z.string() },
+  async ({ ingrediente }) => ({
+    content: [{
+      type: "text",
+      text: Object.keys(RECETAS)
+        .filter(n => RECETAS[n].includes(ingrediente))
+        .join(", ") || "Ninguna",
+    }],
+  })
+);
+
+await server.connect(new StdioServerTransport());`},
+  {t:"Pruébalo con el Inspector",b:"Compila y abre el Inspector apuntando a tu servidor. Lista y llama tus tools a mano.",c:`npx tsc server.ts --target es2022 --module nodenext --moduleResolution nodenext
+npx @modelcontextprotocol/inspector node server.js`},
+  {t:"Conéctalo a Claude",b:"En Claude Desktop: Configuración → Desarrollador → Editar configuración. Agrega tu servidor y reinicia la app.",c:`// claude_desktop_config.json
+{
+  "mcpServers": {
+    "recetas": {
+      "command": "node",
+      "args": ["/ruta/a/recetas-mcp/server.js"]
+    }
+  }
+}`},
+  {t:"Itera y despliega",b:"Pregúntale a Claude por tus recetas. Si elige mal la tool, mejora la descripción. Para compartirlo, usa el transporte Streamable HTTP del SDK detrás de HTTPS con OAuth.",c:`// remoto: StreamableHTTPServerTransport
+import { StreamableHTTPServerTransport }
+  from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+// móntalo en Express/Fastify y protégelo con OAuth`}
+ ]
+};
+const bS=document.getElementById("bSteps");
+for(let i=0;i<5;i++)bS.appendChild(document.createElement("span"));
+function colorize(code){
+  let h=esc(code);
+  h=h.replace(/(#[^\n]*|\/\/[^\n]*)/g,'<span class="c">$1</span>');
+  h=h.replace(/\b(from|import|def|return|if|for|in|const|await|async|new)\b(?![^<]*<\/span>)/g,'<span class="k">$1</span>');
+  return h;
+}
+const bSprites=["laptop","scroll","star","plug","globe"];
+function showBuild(){
+  const s=build[lang][bi];
+  document.getElementById("bBox").innerHTML=`<div class="row" style="gap:14px">${sprite(bSprites[bi],4)}<div><span class="pill" style="background:var(--host)">Paso ${bi+1} de 5</span><h3 style="margin:0">${s.t}</h3></div></div><p style="margin:12px 0 6px">${s.b}</p><pre><button class="btn ghost copy">Copiar</button><code>${colorize(s.c)}</code></pre>`;
+  const cp=document.querySelector("#bBox .copy");
+  cp.onclick=()=>{try{navigator.clipboard.writeText(s.c).then(()=>{cp.textContent="¡Copiado!";setTimeout(()=>cp.textContent="Copiar",1400);}).catch(()=>{cp.textContent="Selecciona y copia";});}catch(e){cp.textContent="Selecciona y copia";}};
+  [...bS.children].forEach((e,k)=>e.classList.toggle("on",k<=bi));
+  document.getElementById("bPrev").disabled=bi===0;
+  document.getElementById("bNext").disabled=bi===4;
+}
+document.getElementById("bPrev").onclick=()=>{bi--;showBuild();};
+document.getElementById("bNext").onclick=()=>{bi++;showBuild();};
+document.getElementById("lPy").onclick=()=>{lang="py";document.getElementById("lPy").classList.add("on");document.getElementById("lTs").classList.remove("on");showBuild();};
+document.getElementById("lTs").onclick=()=>{lang="ts";document.getElementById("lTs").classList.add("on");document.getElementById("lPy").classList.remove("on");showBuild();};
+showBuild();
+
+/* ---------- quiz ---------- */
+const quiz=[
+  ["¿Quién decide normalmente cuándo se usa una Tool?",["El usuario","El modelo","El servidor"],1,"El modelo lee las descripciones de las tools y decide cuál llamar."],
+  ["Quieres que la IA lea tu archivo de configuración sin modificarlo. Lo expones como…",["Tool","Resource","Prompt"],1,"Datos de solo lectura identificados por una URI → Resource."],
+  ["¿Qué formato tienen los mensajes de MCP?",["XML","GraphQL","JSON‑RPC 2.0"],2,"Todo viaja como JSON‑RPC 2.0: peticiones, respuestas y notificaciones."],
+  ["Tu servidor es solo para ti y corre en tu laptop. ¿Qué transporte usas?",["stdio","Streamable HTTP + OAuth","WebSocket"],0,"Local y de un usuario → stdio; el host lanza tu servidor como proceso."],
+  ["¿Cuál es el primer mensaje del ciclo de vida?",["tools/list","initialize","tools/call"],1,"Primero se negocian versión y capacidades con initialize."]
+];
+let qDone=0;
+const qz=document.getElementById("quiz");
+quiz.forEach(([q,opts,ans,why],i)=>{
+  const d=document.createElement("div");d.className="q";
+  d.innerHTML=`<b>${i+1}. ${q}</b>`;
+  const fb=document.createElement("div");fb.className="note";
+  opts.forEach((o,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=o;
+    b.onclick=()=>{ if(d.dataset.done)return; d.dataset.done=1; qDone++;
+      if(k===ans){xpState.quiz++;b.classList.add("right");fb.textContent="✓ "+why;}
+      else{b.classList.add("wrong");d.querySelectorAll(".opt")[ans].classList.add("right");fb.textContent="✗ "+why;}
+      document.getElementById("qScore").textContent=`Llevas ${xpState.quiz}/${qDone}`;
+      if(qDone===quiz.length){ if(xpState.quiz===quiz.length)document.getElementById("qWin").classList.add("on"); else document.getElementById("qScore").textContent+=" · repasa las secciones 2 y 3"; }
+      xp();};
+    d.appendChild(b);});
+  d.appendChild(fb);qz.appendChild(d);
+});
+
+go(0);
+</script>
+</body>
+</html>
